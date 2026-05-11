@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# C extensions
+*.so
+*.dylib
+
+# CMake
+build*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
