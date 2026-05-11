@@ -1,6 +1,6 @@
 [build-system]
 requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
-build-backend = "scikit-build-core.build"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyrawspeed"
@@ -14,3 +14,4 @@ dependencies = ["numpy>=1.24"]
 
 [tool.scikit-build]
 cmake.build-type = "Release"
+cmake.args = ["-DWITH_OPENMP=OFF"]

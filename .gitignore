@@ -19,6 +19,9 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 
+# Virtual environments
+.venv/
+
 # IDEs
 .vscode/
 .idea/
