@@ -100,15 +100,13 @@ NB_MODULE(_pyrawspeed, m) {
             if (d.getDataType() == RawImageType::UINT16) {
                 auto arr = d.getU16DataAsCroppedArray2DRef().getAsArray2DRef();
                 size_t shape[2]    = {(size_t)arr.height(), (size_t)arr.width()};
-                int64_t strides[2] = {(int64_t)(arr.pitch() * sizeof(uint16_t)),
-                                      (int64_t)sizeof(uint16_t)};
+                int64_t strides[2] = {(int64_t)arr.pitch(), 1};
                 return nb::cast(nb::ndarray<nb::numpy, uint16_t, nb::ndim<2>>(
                     arr[0].begin(), 2, shape, owner, strides));
             } else {
                 auto arr = d.getF32DataAsCroppedArray2DRef().getAsArray2DRef();
                 size_t shape[2]    = {(size_t)arr.height(), (size_t)arr.width()};
-                int64_t strides[2] = {(int64_t)(arr.pitch() * sizeof(float)),
-                                      (int64_t)sizeof(float)};
+                int64_t strides[2] = {(int64_t)arr.pitch(), 1};
                 return nb::cast(nb::ndarray<nb::numpy, float, nb::ndim<2>>(
                     arr[0].begin(), 2, shape, owner, strides));
             }
