@@ -15,6 +15,18 @@
 namespace nb = nanobind;
 using namespace rawspeed;
 
+// shared_ptr wrapper: Apple Clang misreports CameraMetaData as copy-constructible, causing nanobind to instantiate a copy wrapper that fails to compile.
+// Holding it in a shared_ptr makes the wrapper copyable — copying just increments the refcount.
+struct CameraMetaDataHolder {
+    std::shared_ptr<CameraMetaData> inner;
+    explicit CameraMetaDataHolder(const char* path)
+        : inner(std::make_shared<CameraMetaData>(path)) {}
+    bool hasCamera(const std::string& make, const std::string& model,
+                   const std::string& mode = "") const {
+        return inner->hasCamera(make, model, mode);
+    }
+};
+
 NB_MODULE(_pyrawspeed, m) {
     m.doc() = "Python bindings for librawspeed";
 
@@ -101,4 +113,28 @@ NB_MODULE(_pyrawspeed, m) {
                     arr[0].begin(), 2, shape, owner, strides));
             }
         });
+
+    // CameraMetaData — loads cameras.xml, needed before decoding
+    nb::class_<CameraMetaDataHolder>(m, "CameraMetaData")
+        .def(nb::init<const char*>(), nb::arg("cameras_xml"))
+        .def("has_camera", &CameraMetaDataHolder::hasCamera,
+             nb::arg("make"), nb::arg("model"), nb::arg("mode") = "");
+
+    // full decode pipeline as a single function.
+    // Internally: FileReader -> Buffer -> RawParser -> RawDecoder -> RawImage.
+    // `storage` owns the file buffer and lives for the duration of the call.
+    m.def("decode", [](const std::string& path, const CameraMetaDataHolder& meta) {
+        FileReader reader(path.c_str());
+        auto [storage, buffer] = reader.readFile();
+
+        RawParser parser(buffer);
+        auto decoder = parser.getDecoder(meta.inner.get());
+
+        decoder->checkSupport(meta.inner.get());
+
+        RawImage raw = decoder->decodeRaw();
+        decoder->decodeMetaData(meta.inner.get());
+
+        return raw;
+    }, nb::arg("path"), nb::arg("meta"));
 }
