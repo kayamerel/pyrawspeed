@@ -81,6 +81,8 @@ NB_MODULE(_pyrawspeed, m) {
             const auto& wp = (*img).whitePoint;
             return wp.has_value() ? nb::cast(*wp) : nb::none();
         })
+        .def_prop_ro("crop_offset_x", [](const RawImage& img) { return (*img).getCropOffset().x; })
+        .def_prop_ro("crop_offset_y", [](const RawImage& img) { return (*img).getCropOffset().y; })
         .def_prop_ro("make",      [](const RawImage& img) { return (*img).metadata.make; })
         .def_prop_ro("model",     [](const RawImage& img) { return (*img).metadata.model; })
         .def_prop_ro("iso_speed", [](const RawImage& img) { return (*img).metadata.isoSpeed; })
