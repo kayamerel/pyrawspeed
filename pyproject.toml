@@ -16,8 +16,7 @@ dependencies = ["numpy>=2,<2.3"]
 cmake.build-type = "Release"
 cmake.args = [
   "-DWITH_OPENMP=OFF",
-  "-DUSE_BUNDLED_PUGIXML=ON",
   "-DWITH_PUGIXML=OFF",
-  "-DUSE_BUNDLED_ZLIB=ON",
+  "-DUSE_BUNDLED_ZLIB=OFF",
   "-DWITH_JPEG=OFF",
 ]
