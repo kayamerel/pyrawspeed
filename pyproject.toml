@@ -17,6 +17,6 @@ cmake.build-type = "Release"
 cmake.args = [
   "-DWITH_OPENMP=OFF",
   "-DWITH_PUGIXML=OFF",
-  "-DUSE_BUNDLED_ZLIB=OFF",
+  "-DWITH_ZLIB=OFF",
   "-DWITH_JPEG=OFF",
 ]
