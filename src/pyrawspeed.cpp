@@ -138,14 +138,15 @@ NB_MODULE(_pyrawspeed, m) {
         RawParser parser(buffer);
         auto decoder = parser.getDecoder(meta.inner.get());
 
-        // checkSupport() is intentionally omitted: it requires a populated
-        // CameraMetaData (cameras.xml) and throws for unknown cameras.
-        // Skipping it means unsupported-camera detection is silent, but the
-        // decode attempt below will still throw if the format is unreadable.
+        // checkSupport() sets mRaw->cfa from cameras.xml, which is required
+        // by FujiDecompressor before decodeRaw(). We attempt it and ignore
+        // failures (e.g. camera not in cameras.xml) — for most non-Fuji
+        // formats the CFA is embedded in the file and decodeRaw() still works.
+        try {
+            decoder->checkSupport(meta.inner.get());
+        } catch (...) {}
 
         RawImage raw = decoder->decodeRaw();
-        // decodeMetaData with an empty meta still extracts file-embedded data
-        // (WB coefficients, ISO, black level, crop offset, etc.)
         decoder->decodeMetaData(meta.inner.get());
 
         return raw;
