@@ -15,12 +15,16 @@
 namespace nb = nanobind;
 using namespace rawspeed;
 
-// shared_ptr wrapper: Apple Clang misreports CameraMetaData as copy-constructible, causing nanobind to instantiate a copy wrapper that fails to compile.
-// Holding it in a shared_ptr makes the wrapper copyable — copying just increments the refcount.
+// CameraMetaData wrapper.
+// We avoid the path-based constructor (which requires pugixml / HAVE_PUGIXML)
+// and use the default constructor instead.  Most RAW files embed their own
+// white-balance, black-level and crop data in EXIF/makernotes, so a full
+// cameras.xml parse is not required for a working basic decode.
+// The shared_ptr keeps the object heap-allocated so nanobind never tries to
+// copy it (Apple Clang misreports it as copy-constructible).
 struct CameraMetaDataHolder {
     std::shared_ptr<CameraMetaData> inner;
-    explicit CameraMetaDataHolder(const char* path)
-        : inner(std::make_shared<CameraMetaData>(path)) {}
+    CameraMetaDataHolder() : inner(std::make_shared<CameraMetaData>()) {}
     bool hasCamera(const std::string& make, const std::string& model,
                    const std::string& mode = "") const {
         return inner->hasCamera(make, model, mode);
@@ -114,9 +118,11 @@ NB_MODULE(_pyrawspeed, m) {
             }
         });
 
-    // CameraMetaData — loads cameras.xml, needed before decoding
+    // CameraMetaData — empty metadata object; no cameras.xml / pugixml needed.
+    // cameras.xml corrections are not applied, but file-embedded EXIF/makernote
+    // data (WB coefficients, black level, crop) is used by decodeMetaData.
     nb::class_<CameraMetaDataHolder>(m, "CameraMetaData")
-        .def(nb::init<const char*>(), nb::arg("cameras_xml"))
+        .def(nb::init<>())
         .def("has_camera", &CameraMetaDataHolder::hasCamera,
              nb::arg("make"), nb::arg("model"), nb::arg("mode") = "");
 
@@ -128,11 +134,18 @@ NB_MODULE(_pyrawspeed, m) {
         auto [storage, buffer] = reader.readFile();
 
         RawParser parser(buffer);
-        auto decoder = parser.getDecoder(meta.inner.get());
+        // Pass nullptr so format detection relies on file magic / TIFF structure
+        // rather than cameras.xml lookups (which require pugixml).
+        auto decoder = parser.getDecoder(nullptr);
 
-        decoder->checkSupport(meta.inner.get());
+        // checkSupport() is intentionally omitted: it requires a populated
+        // CameraMetaData (cameras.xml) and throws for unknown cameras.
+        // Skipping it means unsupported-camera detection is silent, but the
+        // decode attempt below will still throw if the format is unreadable.
 
         RawImage raw = decoder->decodeRaw();
+        // decodeMetaData with an empty meta still extracts file-embedded data
+        // (WB coefficients, ISO, black level, crop offset, etc.)
         decoder->decodeMetaData(meta.inner.get());
 
         return raw;
