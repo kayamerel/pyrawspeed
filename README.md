@@ -10,40 +10,20 @@ Python bindings for [rawspeed](https://github.com/darktable-org/rawspeed), the C
 
 This wrapper was developed as part of [**ColorHead**](https://colorhead.pages.dev/), a tool for color negative film inversion, a project at the [IVRL lab](https://www.epfl.ch/labs/ivrl/) ([GitHub](https://github.com/IVRL)) at EPFL.
 
-### Setup guide
+## Setup guide
 
-### Python
+### Requirements
 
-Python 3.10 or newer is required. I recommend to use a virtual environment:
+- Python 3.10 or newer
+- A C++ compiler toolchain (Xcode Command Line Tools on macOS, `build-essential` on Debian/Ubuntu) — the rawspeed library is compiled from source during installatio
 
-```
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### Python build dependencies
+### Install via pip from GitHub
 
 ```
-pip install scikit-build-core nanobind ninja cmake numpy
+pip install "git+https://github.com/kayamerel/pyrawspeed.git"
 ```
-
-## Installation
-
-After installing the requirements above:
-
-```
-pip install . --no-build-isolation
-```
-
-> **Note:** `--no-build-isolation` is required so that pip uses the nanobind
-> and scikit-build-core already installed in your environment rather than
-> trying to fetch them in an isolated build sandbox.
 
 ## Usage
-
-Decoding requires rawspeed's camera database (`cameras.xml`, found in the
-submodule at `rawspeed/data/cameras.xml`). Load it once into a
-`CameraMetaData` object, then pass it to `decode()`:
 
 ```python
 import numpy as np
