@@ -15,12 +15,17 @@
 namespace nb = nanobind;
 using namespace rawspeed;
 
-// shared_ptr wrapper: Apple Clang misreports CameraMetaData as copy-constructible, causing nanobind to instantiate a copy wrapper that fails to compile.
-// Holding it in a shared_ptr makes the wrapper copyable — copying just increments the refcount.
+// CameraMetaData wrapper.
+// The shared_ptr keeps the object heap-allocated so nanobind never tries to
+// copy it (Apple Clang misreports it as copy-constructible).
+// Two constructors are exposed:
+//   CameraMetaData()        — empty metadata (no cameras.xml needed)
+//   CameraMetaData(path)    — load cameras.xml from the given path (requires pugixml)
 struct CameraMetaDataHolder {
     std::shared_ptr<CameraMetaData> inner;
-    explicit CameraMetaDataHolder(const char* path)
-        : inner(std::make_shared<CameraMetaData>(path)) {}
+    CameraMetaDataHolder() : inner(std::make_shared<CameraMetaData>()) {}
+    explicit CameraMetaDataHolder(const std::string& path)
+        : inner(std::make_shared<CameraMetaData>(path.c_str())) {}
     bool hasCamera(const std::string& make, const std::string& model,
                    const std::string& mode = "") const {
         return inner->hasCamera(make, model, mode);
@@ -114,9 +119,12 @@ NB_MODULE(_pyrawspeed, m) {
             }
         });
 
-    // CameraMetaData — loads cameras.xml, needed before decoding
+    // CameraMetaData — wraps rawspeed's CameraMetaData.
+    // CameraMetaData()       — empty, no cameras.xml needed.
+    // CameraMetaData(path)   — load cameras.xml from path (requires pugixml build).
     nb::class_<CameraMetaDataHolder>(m, "CameraMetaData")
-        .def(nb::init<const char*>(), nb::arg("cameras_xml"))
+        .def(nb::init<>())
+        .def(nb::init<const std::string&>(), nb::arg("path"))
         .def("has_camera", &CameraMetaDataHolder::hasCamera,
              nb::arg("make"), nb::arg("model"), nb::arg("mode") = "");
 
@@ -130,7 +138,13 @@ NB_MODULE(_pyrawspeed, m) {
         RawParser parser(buffer);
         auto decoder = parser.getDecoder(meta.inner.get());
 
-        decoder->checkSupport(meta.inner.get());
+        // checkSupport() sets mRaw->cfa from cameras.xml, which is required
+        // by FujiDecompressor before decodeRaw(). We attempt it and ignore
+        // failures (e.g. camera not in cameras.xml) — for most non-Fuji
+        // formats the CFA is embedded in the file and decodeRaw() still works.
+        try {
+            decoder->checkSupport(meta.inner.get());
+        } catch (...) {}
 
         RawImage raw = decoder->decodeRaw();
         decoder->decodeMetaData(meta.inner.get());
