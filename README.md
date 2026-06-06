@@ -6,7 +6,7 @@
 
 Python bindings for [rawspeed](https://github.com/darktable-org/rawspeed), the C++ RAW image decoding library that powers [darktable](https://www.darktable.org/).
 
-`rawspeed` is **fast**. That speed is exactly why we built this wrapper: existing Python options were too slow for our processing pipelines, while rawspeed decodes RAW files in a fraction of the time. `pyrawspeed` exposes that performance directly to Python, returning the decoded sensor data as a **zero-copy** numpy array along with the metadata (black/white levels, CFA pattern, white balance coefficients, ...).
+`rawspeed` is **fast**. `pyrawspeed` exposes that performance directly to Python, returning the decoded sensor data as a **zero-copy** numpy array along with the metadata (black/white levels, CFA pattern, white balance coefficients, ...).
 
 This wrapper was developed as part of [**ColorHead**](https://colorhead.pages.dev/), a tool for color negative film inversion, a project at the [IVRL lab](https://www.epfl.ch/labs/ivrl/) ([GitHub](https://github.com/IVRL)) at EPFL.
 
