@@ -10,14 +10,31 @@ Python bindings for [rawspeed](https://github.com/darktable-org/rawspeed), the C
 
 This wrapper was developed as part of [**ColorHead**](https://colorhead.pages.dev/), a tool for color negative film inversion, a project at the [IVRL lab](https://www.epfl.ch/labs/ivrl/) ([GitHub](https://github.com/IVRL)) at EPFL.
 
-## Setup guide
+## Install
 
-### Requirements
+### Prebuilt wheels (recommended)
+
+Download the wheel matching your OS, architecture and Python version from the
+[Releases page](https://github.com/kayamerel/pyrawspeed/releases), then:
+
+```
+pip install path/to/pyrawspeed-<version>-<tag>.whl
+```
+
+Wheels are built for Linux (x86_64, aarch64, glibc 2.28+) and macOS 14+
+(Apple Silicon and Intel). The `cp312-abi3` wheels use the stable ABI and work
+on Python 3.12 and **any newer** Python; `cp310`/`cp311` have their own wheels.
+The wheels bundle the rawspeed camera database (`cameras.xml`) — no extra
+files are needed at runtime.
+
+### Build from source
+
+Requirements:
 
 - Python 3.10 or newer
-- A C++ compiler toolchain (Xcode Command Line Tools on macOS, `build-essential` on Debian/Ubuntu) — the rawspeed library is compiled from source during installatio
-
-### Install via pip from GitHub
+- A C++20 compiler toolchain (Xcode Command Line Tools on macOS,
+  `build-essential` on Debian/Ubuntu) — the rawspeed library is compiled from
+  source during installation
 
 ```
 pip install "git+https://github.com/kayamerel/pyrawspeed.git"
@@ -27,10 +44,9 @@ pip install "git+https://github.com/kayamerel/pyrawspeed.git"
 
 ```python
 import numpy as np
-from pyrawspeed import _pyrawspeed as rs
+import pyrawspeed as rs
 
-meta = rs.CameraMetaData("path/to/rawspeed/data/cameras.xml")
-img  = rs.decode("path/to/photo.RAF", meta)
+img = rs.decode("path/to/photo.RAF")  # uses the bundled camera database
 
 print(f"{img.make} {img.model}")
 print(f"size:        {img.width} x {img.height}")
@@ -48,10 +64,20 @@ normalized = np.clip(normalized, 0.0, 1.0)
 
 ### API
 
-- `CameraMetaData(cameras_xml)` — loads the camera database. Also exposes
-  `has_camera(make, model, mode="")`.
-- `decode(path, meta) -> RawImage` — runs the full rawspeed pipeline
+- `decode(path, meta=None) -> RawImage` — runs the full rawspeed pipeline
   (file read → parse → decode raw data + metadata) and returns a `RawImage`.
+  When `meta` is omitted, the camera database bundled with the package is
+  used.
+- `CameraMetaData(cameras_xml)` — loads a camera database from an explicit
+  path. Also exposes `has_camera(make, model, mode="")`.
+- `cameras_xml_path()` / `CAMERAS_XML` — location of the bundled
+  `cameras.xml`.
+- `default_camera_metadata()` — the cached `CameraMetaData` for the bundled
+  database.
+
+The native extension remains importable as before
+(`from pyrawspeed import _pyrawspeed`), where `decode(path, meta)` requires
+an explicit `CameraMetaData`.
 
 `RawImage` properties (all read-only):
 

@@ -10,10 +10,18 @@ readme = "README.md"
 license = { text = "LGPL-2.1-only" }
 authors = [{ name = "kayamerel", email = "kayamerelwoo@gmail.ch" }]
 requires-python = ">=3.10"
-dependencies = ["numpy>=2,<2.3"]
+dependencies = ["numpy>=2"]
 
 [tool.scikit-build]
 cmake.build-type = "Release"
+wheel.packages = ["src/pyrawspeed"]
+# Build abi3 wheels when the interpreter is >= 3.12; regular tags below that.
+wheel.py-api = "cp312"
+# rawspeed/pugixml install rules drop extra artifacts into the prefix:
+# share/rawspeed (cameras.xml copy), bin/rs-identify, and pugixml headers,
+# static lib and cmake files. Only pyrawspeed/ belongs in the wheel — we
+# bundle cameras.xml under pyrawspeed/data via the top-level CMakeLists.txt.
+wheel.exclude = ["share/**", "bin/**", "include/**", "lib/**"]
 cmake.args = [
   "-DWITH_OPENMP=OFF",
   "-DWITH_PUGIXML=ON",
@@ -23,3 +31,30 @@ cmake.args = [
   "-DWITH_JPEG=OFF",
   "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 ]
+
+[tool.cibuildwheel]
+# cp312 produces an abi3 wheel (wheel.py-api above) covering 3.12+;
+# cp310/cp311 get regular per-version wheels.
+build = ["cp310-*", "cp311-*", "cp312-*"]
+# manylinux only for now; rawspeed on musl is untested upstream.
+skip = ["*-musllinux_*"]
+build-verbosity = 1
+# rawspeed requires GCC >= 12: manylinux_2_28 ships a recent gcc-toolset.
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+test-command = "python {project}/tests/smoke_test.py"
+
+[tool.cibuildwheel.config-settings]
+# Portable wheels: -mtune=generic instead of -march=native (CpuMarch.cmake).
+# Local source builds (pip install .) intentionally keep -march=native.
+"cmake.define.BINARY_PACKAGE_BUILD" = "ON"
+
+[tool.cibuildwheel.macos.environment]
+# rawspeed hard-errors below 13.5; 14.0 gives a clean macosx_14_0 wheel tag.
+MACOSX_DEPLOYMENT_TARGET = "14.0"
+
+[tool.cibuildwheel.windows.environment]
+# rawspeed has no MSVC support (GNU-style flags throughout its CMake); use
+# LLVM clang with the GNU driver targeting the MSVC ABI.
+CC = "clang"
+CXX = "clang++"
