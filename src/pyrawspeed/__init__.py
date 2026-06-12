@@ -24,7 +24,7 @@ from ._pyrawspeed import (
     TiffParserError,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #: Absolute path to the cameras.xml bundled with this wheel. It is the exact
 #: copy from the rawspeed commit the extension module was compiled against.

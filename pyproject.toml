@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyrawspeed"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python bindings for the rawspeed RAW image decoding library"
 readme = "README.md"
 license = { text = "LGPL-2.1-only" }
