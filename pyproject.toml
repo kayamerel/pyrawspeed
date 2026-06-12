@@ -53,6 +53,11 @@ test-command = "python {project}/tests/smoke_test.py"
 # rawspeed hard-errors below 13.5; 14.0 gives a clean macosx_14_0 wheel tag.
 MACOSX_DEPLOYMENT_TARGET = "14.0"
 
+[tool.cibuildwheel.windows]
+# 64-bit only: cibuildwheel also builds win32 by default, but clang emits
+# x86_64 objects and the link against the 32-bit python lib fails.
+archs = ["AMD64"]
+
 [tool.cibuildwheel.windows.environment]
 # rawspeed has no MSVC support (GNU-style flags throughout its CMake); use
 # LLVM clang with the GNU driver targeting the MSVC ABI. CMAKE_GENERATOR
