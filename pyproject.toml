@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.0", "ninja"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -55,6 +55,9 @@ MACOSX_DEPLOYMENT_TARGET = "14.0"
 
 [tool.cibuildwheel.windows.environment]
 # rawspeed has no MSVC support (GNU-style flags throughout its CMake); use
-# LLVM clang with the GNU driver targeting the MSVC ABI.
+# LLVM clang with the GNU driver targeting the MSVC ABI. CMAKE_GENERATOR
+# must be Ninja: the Visual Studio generator ignores CC/CXX and compiles
+# with cl.exe.
 CC = "clang"
 CXX = "clang++"
+CMAKE_GENERATOR = "Ninja"
