@@ -1,0 +1,74 @@
+name: Wheels
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Windows (clang targeting the MSVC ABI) is experimental — rawspeed does
+    # not support MSVC and is only CI-tested on Windows under MSYS2 upstream.
+    # Never let it block the macOS/Linux wheels.
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest      # linux x86_64 (manylinux_2_28 container)
+          - os: ubuntu-24.04-arm   # linux aarch64, native
+          - os: macos-15           # macOS arm64
+          - os: macos-15-intel     # macOS x86_64
+          - os: windows-latest     # windows amd64 — experimental
+            experimental: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: pypa/cibuildwheel@v3.4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  build_sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - run: pipx run build --sdist
+
+      - run: pipx run twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  release:
+    name: GitHub Release
+    needs: [build_wheels, build_sdist]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
