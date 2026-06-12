@@ -21,9 +21,10 @@ Download the wheel matching your OS, architecture and Python version from the
 pip install path/to/pyrawspeed-<version>-<tag>.whl
 ```
 
-Wheels are built for Linux (x86_64, aarch64, glibc 2.28+) and macOS 14+
-(Apple Silicon and Intel). The `cp312-abi3` wheels use the stable ABI and work
-on Python 3.12 and **any newer** Python; `cp310`/`cp311` have their own wheels.
+Wheels are built for Linux (x86_64, aarch64, glibc 2.28+), macOS 14+
+(Apple Silicon and Intel) and Windows (64-bit). The `cp312-abi3` wheels use
+the stable ABI and work on Python 3.12 and **any newer** Python;
+`cp310`/`cp311` have their own wheels.
 The wheels bundle the rawspeed camera database (`cameras.xml`) — no extra
 files are needed at runtime.
 
